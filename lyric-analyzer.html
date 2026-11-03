@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyric Flow & Rhyme Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#09090b',
+                        darkCard: '#18181b',
+                        neonPurple: '#a855f7',
+                        neonCyan: '#06b6d4',
+                        neonEmerald: '#10b981',
+                        neonPink: '#ec4899'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth custom scrollbar for textareas and results */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a855f7;
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-zinc-100 min-h-screen font-sans flex flex-col antialiased">
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 text-white font-medium px-5 py-3 rounded-xl shadow-2xl opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-4 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="toastMsg">Please write some bars!</span>
+    </div>
+
+    <!-- Main Wrapper -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl flex flex-col justify-between">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center p-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl mb-3 shadow-lg">
+                <span class="text-3xl animate-bounce">🎙️</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-neonPurple via-neonPink to-neonCyan bg-clip-text text-transparent">
+                Lyric Flow & Rhyme Analyzer
+            </h1>
+            <p class="text-sm md:text-base text-zinc-400 mt-2">
+                Analyze your rhyme families, syllable structures, flow metrics, and vocabulary depth instantly.
+            </p>
+        </header>
+
+        <!-- Input & Interactive Panel -->
+        <section class="grid grid-cols-1 gap-6 mb-8">
+            <div class="bg-darkCard border border-zinc-800 rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neonPurple via-neonPink to-neonCyan"></div>
+                
+                <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
+                    <label for="lyricInput" class="text-sm font-semibold tracking-wider uppercase text-zinc-400 flex items-center gap-2">
+                        <span>Drop Your Bars Below</span>
+                        <span class="bg-zinc-800 text-zinc-300 text-xs px-2.5 py-0.5 rounded-full" id="charCounter">0 characters</span>
+                    </label>
+                    
+                    <!-- Presets Selector -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-zinc-500 hidden sm:inline">Try Demo:</span>
+                        <select id="presetSelect" class="bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-neonPurple transition cursor-pointer">
+                            <option value="">-- Custom --</option>
+                            <option value="classic">Classic Boom-Bap</option>
+                            <option value="speed">Double-Time Flow</option>
+                            <option value="story">Poetic Narrative</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Lyric Textarea -->
+                <textarea 
+                    id="lyricInput" 
+                    placeholder="Paste your lines here...&#10;Example:&#10;I paint pictures with lyrics that stick in your spirit&#10;A linguistic miracle whenever you hear it..."
+                    class="w-full h-44 bg-zinc-900/60 text-zinc-100 border border-zinc-700/60 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-neonPurple/50 focus:border-neonPurple transition-all text-base md:text-lg font-mono placeholder-zinc-600 resize-none"
+                    oninput="updateCount()"></textarea>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <button 
+                        onclick="clearLyrics()" 
+                        class="px-5 py-3 rounded-xl border border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/50 text-zinc-300 text-sm font-semibold transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Clear Canvas
+                    </button>
+                    <button 
+                        onclick="runAnalysis()" 
+                        class="px-5 py-3 rounded-xl bg-gradient-to-r from-neonPurple to-neonPink hover:brightness-110 active:scale-[0.98] text-black font-extrabold text-sm tracking-wide uppercase transition-all shadow-lg shadow-neonPurple/20 flex items-center justify-center gap-2">
+                        Analyze Flow
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Outputs Dashboard -->
+        <section id="resultContainer" class="hidden space-y-6">
+            
+            <!-- Quick Metrics Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between">
+                    <span class="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Total Lines</span>
+                    <span id="statLines" class="text-2xl md:text-3xl font-black text-neonPurple mt-1">-</span>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between">
+                    <span class="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Total Words</span>
+                    <span id="statWords" class="text-2xl md:text-3xl font-black text-neonCyan mt-1">-</span>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between">
+                    <span class="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Vocabulary</span>
+                    <span id="statUnique" class="text-2xl md:text-3xl font-black text-neonEmerald mt-1">-</span>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 flex flex-col justify-between">
+                    <span class="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Lexical Diversity</span>
+                    <span id="statDiversity" class="text-2xl md:text-3xl font-black text-neonPink mt-1">-</span>
+                </div>
+            </div>
+
+            <!-- Tab Switching / Split Analysis Layout -->
+            <div class="bg-darkCard border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+                <!-- Navigation Tabs -->
+                <div class="flex border-b border-zinc-800 bg-zinc-900/50">
+                    <button onclick="switchTab('visual')" id="tab-visual" class="flex-1 py-3 px-4 text-xs md:text-sm font-bold border-b-2 border-neonPurple text-zinc-100 transition focus:outline-none">
+                        🔥 Lyric Visualizer
+                    </button>
+                    <button onclick="switchTab('frequencies')" id="tab-frequencies" class="flex-1 py-3 px-4 text-xs md:text-sm font-bold border-b-2 border-transparent text-zinc-500 hover:text-zinc-300 transition focus:outline-none">
+                        📊 Word Analytics
+                    </button>
+                    <button onclick="switchTab('raw-json')" id="tab-raw-json" class="flex-1 py-3 px-4 text-xs md:text-sm font-bold border-b-2 border-transparent text-zinc-500 hover:text-zinc-300 transition focus:outline-none">
+                        ⚙️ Dev Data (JSON)
+                    </button>
+                </div>
+
+                <!-- Tab 1: Visual Interactive Lyric Flow Map -->
+                <div id="panel-visual" class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-zinc-400">Flow Map (End-Rhyme Highlights)</h3>
+                        <span class="text-xs text-zinc-500 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-neonPurple animate-pulse"></span> Rhyme Matches
+                        </span>
+                    </div>
+                    
+                    <div id="lyricVisualizer" class="space-y-3 font-mono text-base md:text-lg leading-relaxed bg-zinc-950 p-5 rounded-xl border border-zinc-900 overflow-x-auto max-h-[450px] overflow-y-auto">
+                        <!-- Dynamic rendered verses injected here -->
+                    </div>
+
+                    <div class="mt-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3 text-xs text-zinc-400 space-y-1">
+                        <span class="font-semibold text-zinc-300">💡 Flow Pro-Tip:</span>
+                        <p>Consistent end-rhyme colors indicate strong coupled rhymes ($AABB$ or $ABAB$ patterns). Syllable counts on the left help track your internal pocket / delivery cadence.</p>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Word Analytics Panel -->
+                <div id="panel-frequencies" class="p-6 hidden">
+                    <div class="flex flex-wrap items-center justify-between mb-6 gap-3">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase tracking-widest text-zinc-400">Word Frequency Analysis</h3>
+                            <p class="text-xs text-zinc-500 mt-1">Which words populate your lyric database the most?</p>
+                        </div>
+                        
+                        <!-- Toggle Stop Words -->
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="stopWordToggle" class="sr-only peer" onchange="runAnalysis()">
+                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-neonCyan"></div>
+                            <span class="ml-2 text-xs font-medium text-zinc-400">Exclude Common Fillers</span>
+                        </label>
+                    </div>
+
+                    <!-- Custom Visual Chart representation -->
+                    <div id="freqChart" class="space-y-4">
+                        <!-- Custom styled charts inserted dynamically -->
+                    </div>
+                </div>
+
+                <!-- Tab 3: Raw JSON Data Panel -->
+                <div id="panel-raw-json" class="p-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-zinc-400">Exportable Structured Data</h3>
+                        <button onclick="copyRawJson()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-3 py-1.5 rounded-lg font-semibold transition active:scale-[0.98]">
+                            Copy Payload
+                        </button>
+                    </div>
+                    <pre id="output" class="bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-xs text-zinc-300 font-mono overflow-auto max-h-[350px] whitespace-pre-wrap"></pre>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Cleaned Footer -->
+    <footer class="text-center py-6 border-t border-zinc-900 mt-12 bg-zinc-950/40 text-xs text-zinc-600">
+        <p>© 2026 Lyric Flow Analyzer</p>
+    </footer>
+
+    <!-- Logic Engine -->
+    <script>
+        // Preset lyric selections
+        const PRESETS = {
+            classic: `I paint pictures with lyrics that stick in your spirit\nA linguistic miracle whenever you hear it\nMoving with velocity, avoiding monstrosity\nThe lyrical prodigy rocking the odyssey`,
+            speed: `Super-sonic energy delivering the remedy\nI'm mastering the chemistry, defeat another enemy\nFlow running rapid and you know I gotta handle it\nStacking up the lines inside the booth and then I damage it`,
+            story: `Shadows casting down along the cold city concrete\nWalking through the alleyways to keep up with the heartbeat\nSirens in the distance singing songs of the night shift\nHoping for a catalyst to give the block a light lift`
+        };
+
+        // Standard stop words to filter out
+        const STOP_WORDS = new Set([
+            'the', 'a', 'and', 'it', 'to', 'of', 'in', 'is', 'i', 'you', 'that', 'on', 'for', 'with', 'as', 'at', 'by', 'an', 'be', 'this', 'are', 'your', 'my', 'me', 'then'
+        ]);
+
+        // Preset palettes for colorizing rhyme endings (Tailwind classes matching bg color)
+        const RHYME_PALETTES = [
+            { bg: 'bg-purple-900/35 border-purple-500 text-purple-200', name: 'purple' },
+            { bg: 'bg-cyan-900/35 border-cyan-500 text-cyan-200', name: 'cyan' },
+            { bg: 'bg-emerald-900/35 border-emerald-500 text-emerald-200', name: 'emerald' },
+            { bg: 'bg-pink-900/35 border-pink-500 text-pink-200', name: 'pink' },
+            { bg: 'bg-amber-900/35 border-amber-500 text-amber-200', name: 'amber' },
+            { bg: 'bg-rose-900/35 border-rose-500 text-rose-200', name: 'rose' },
+            { bg: 'bg-indigo-900/35 border-indigo-500 text-indigo-200', name: 'indigo' },
+            { bg: 'bg-orange-900/35 border-orange-500 text-orange-200', name: 'orange' }
+        ];
+
+        // Track selected tab
+        let activeTab = 'visual';
+
+        // Auto-hook elements
+        const lyricInput = document.getElementById('lyricInput');
+        const charCounter = document.getElementById('charCounter');
+        const presetSelect = document.getElementById('presetSelect');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        // Handle Presets loading
+        presetSelect.addEventListener('change', (e) => {
+            const selectedVal = e.target.value;
+            if (PRESETS[selectedVal]) {
+                lyricInput.value = PRESETS[selectedVal];
+                updateCount();
+                runAnalysis();
+            }
+        });
+
+        function updateCount() {
+            const count = lyricInput.value.length;
+            charCounter.textContent = `${count} character${count === 1 ? '' : 's'}`;
+        }
+
+        function clearLyrics() {
+            lyricInput.value = '';
+            presetSelect.value = '';
+            updateCount();
+            document.getElementById('resultContainer').classList.add('hidden');
+        }
+
+        function triggerToast(message) {
+            toastMsg.textContent = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
+        }
+
+        // Extremely light estimation of English syllable count
+        function estimateSyllables(word) {
+            word = word.toLowerCase().trim();
+            if (word.length <= 3) return 1;
+            word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+            word = word.replace(/^y/, '');
+            const syllables = word.match(/[aeiouy]{1,2}/g);
+            return syllables ? syllables.length : 1;
+        }
+
+        // Rhyme end clustering heuristic
+        function getRhymeEnding(word) {
+            const clean = word.toLowerCase().replace(/[^a-z0-9']/g, "");
+            if (!clean) return "";
+            
+            const commonEndings = ["ee", "e", "i", "y", "ay", "a", "oh", "o", "oo", "u", "ow", "ight", "ite", "ine", "ign", "ore", "or", "air", "are", "ear", "eer", "all", "al", "it", "et", "id", "ed", "ad", "at", "ut", "ip", "ep", "ap", "op", "up"];
+            for (const end of commonEndings) {
+                if (clean.endsWith(end)) return end;
+            }
+            return clean.slice(-2);
+        }
+
+        function runAnalysis() {
+            const lyrics = lyricInput.value;
+            if (!lyrics.trim()) {
+                return triggerToast("Paste some raw bars first before running analysis!");
+            }
+
+            // Parse lines
+            const lines = lyrics.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            
+            // Words setup
+            const allWordsRaw = lyrics.toLowerCase().replace(/[^a-z0-9'\s]/g, " ").split(/\s+/).filter(w => w.length > 0);
+            const stopWordsChecked = document.getElementById('stopWordToggle').checked;
+            
+            // Clean words for Frequency Chart
+            const filteredWords = stopWordsChecked 
+                ? allWordsRaw.filter(word => !STOP_WORDS.has(word))
+                : allWordsRaw;
+
+            // Generate Word Frequency mapping
+            const freq = {};
+            for (const word of filteredWords) {
+                freq[word] = (freq[word] || 0) + 1;
+            }
+            const sortedFrequency = Object.entries(freq)
+                .sort((a, b) => b[1] - a[1])
+                .map(([word, count]) => ({ word, count }));
+
+            // Rhyme Group analysis on terminal end-words
+            const lastWordsMap = lines.map(line => {
+                const words = line.toLowerCase().split(/\s+/);
+                return words[words.length - 1] ? words[words.length - 1].replace(/[^a-z0-9']/g, "") : "";
+            });
+
+            // Count occurrences of rhyme endings
+            const endingCounts = {};
+            lastWordsMap.forEach(word => {
+                if (!word) return;
+                const ending = getRhymeEnding(word);
+                endingCounts[ending] = (endingCounts[ending] || 0) + 1;
+            });
+
+            // Map and cluster rhyme families which have at least 1 line
+            const rhymeMap = {};
+            lastWordsMap.forEach((word, index) => {
+                if (!word) return;
+                const ending = getRhymeEnding(word);
+                if (!rhymeMap[ending]) rhymeMap[ending] = [];
+                rhymeMap[ending].push({ line: index + 1, word });
+            });
+
+            // Format stats
+            const totalLines = lines.length;
+            const totalWords = allWordsRaw.length;
+            const uniqueWords = Object.keys(freq).length;
+            const diversity = totalWords > 0 ? ((uniqueWords / totalWords) * 100).toFixed(1) : 0;
+
+            // Update DOM metrics
+            document.getElementById('statLines').textContent = totalLines;
+            document.getElementById('statWords').textContent = totalWords;
+            document.getElementById('statUnique').textContent = uniqueWords;
+            document.getElementById('statDiversity').textContent = `${diversity}%`;
+
+            // Assign standard aesthetic palettes to rhyme endings that occur multiple times
+            const recurringFamilies = Object.keys(rhymeMap)
+                .filter(ending => rhymeMap[ending].length > 1 && ending.length > 0)
+                .sort((a, b) => rhymeMap[b].length - rhymeMap[a].length);
+
+            const familyPaletteAssigned = {};
+            recurringFamilies.forEach((ending, idx) => {
+                familyPaletteAssigned[ending] = RHYME_PALETTES[idx % RHYME_PALETTES.length];
+            });
+
+            // Render Tab 1: Visual Interactive Lyric Flow Map with Syllables
+            const visualizerContainer = document.getElementById('lyricVisualizer');
+            visualizerContainer.innerHTML = '';
+
+            lines.forEach((lineText, index) => {
+                const words = lineText.split(/\s+/);
+                const lineEndWordClean = lastWordsMap[index];
+                const lineEnding = getRhymeEnding(lineEndWordClean);
+                const assignedPalette = familyPaletteAssigned[lineEnding];
+
+                // Syllable calculation for line
+                let lineSyllables = 0;
+                words.forEach(w => lineSyllables += estimateSyllables(w));
+
+                const lineDiv = document.createElement('div');
+                lineDiv.className = "flex items-center gap-4 py-1.5 border-b border-zinc-900/60 group hover:bg-zinc-900/20 px-2 rounded-lg transition-all duration-150";
+                
+                // Syllable meter badge
+                const sylBadge = document.createElement('span');
+                sylBadge.className = "text-[10px] tracking-wider text-zinc-500 font-bold bg-zinc-900 px-2 py-1 rounded w-10 text-center select-none group-hover:text-neonPurple";
+                sylBadge.textContent = `${lineSyllables}s`;
+
+                // Line payload text area
+                const textContainer = document.createElement('div');
+                textContainer.className = "flex-grow flex flex-wrap items-center gap-1.5 text-zinc-300";
+
+                words.forEach((word, wordIndex) => {
+                    const span = document.createElement('span');
+                    span.textContent = word;
+
+                    // Highlight the last word if it belongs to a recurring rhyme scheme group
+                    if (wordIndex === words.length - 1 && assignedPalette) {
+                        span.className = `px-2 py-0.5 text-xs md:text-sm font-extrabold border rounded-md shadow-sm transition-all cursor-pointer ${assignedPalette.bg}`;
+                        span.title = `Rhyme Scheme [Family: ${lineEnding}]`;
+                    } else {
+                        span.className = "transition-all duration-150 group-hover:text-zinc-100";
+                    }
+                    textContainer.appendChild(span);
+                });
+
+                lineDiv.appendChild(sylBadge);
+                lineDiv.appendChild(textContainer);
+                visualizerContainer.appendChild(lineDiv);
+            });
+
+            // Render Tab 2: Word Analytics Frequency Bar Charts
+            const freqChart = document.getElementById('freqChart');
+            freqChart.innerHTML = '';
+            
+            const topWords = sortedFrequency.slice(0, 10);
+            if (topWords.length === 0) {
+                freqChart.innerHTML = '<p class="text-zinc-500 text-xs text-center py-4">No content to analyze.</p>';
+            } else {
+                const highestFreq = topWords[0].count;
+                topWords.forEach(item => {
+                    const pct = Math.max(12, (item.count / highestFreq) * 100);
+                    
+                    const row = document.createElement('div');
+                    row.className = "space-y-1.5";
+                    
+                    const labelWrap = document.createElement('div');
+                    labelWrap.className = "flex justify-between items-center text-xs";
+                    
+                    const name = document.createElement('span');
+                    name.className = "font-bold font-mono text-zinc-300";
+                    name.textContent = `"${item.word}"`;
+                    
+                    const val = document.createElement('span');
+                    val.className = "text-zinc-400 font-bold";
+                    val.textContent = `${item.count} hits`;
+                    
+                    labelWrap.appendChild(name);
+                    labelWrap.appendChild(val);
+
+                    const track = document.createElement('div');
+                    track.className = "w-full bg-zinc-950 h-3.5 rounded-full overflow-hidden border border-zinc-900";
+                    
+                    const fill = document.createElement('div');
+                    fill.className = "bg-gradient-to-r from-neonPurple to-neonCyan h-full rounded-full transition-all duration-1000";
+                    fill.style.width = `0%`; // Setup for trigger transition
+                    
+                    track.appendChild(fill);
+                    row.appendChild(labelWrap);
+                    row.appendChild(track);
+                    freqChart.appendChild(row);
+
+                    // Animate width
+                    setTimeout(() => {
+                        fill.style.width = `${pct}%`;
+                    }, 50);
+                });
+            }
+
+            // Render Tab 3: Raw JSON Dump
+            const resultObject = {
+                totalLines,
+                totalWords,
+                uniqueWords,
+                lexicalDiversityPercentage: `${diversity}%`,
+                topWordFrequency: sortedFrequency.slice(0, 10),
+                rawRhymeFamilies: rhymeMap
+            };
+
+            document.getElementById('output').textContent = JSON.stringify(resultObject, null, 2);
+            
+            // Show overall container
+            document.getElementById('resultContainer').classList.remove('hidden');
+        }
+
+        function switchTab(tabId) {
+            // Reset tab selectors
+            const tabs = ['visual', 'frequencies', 'raw-json'];
+            tabs.forEach(t => {
+                const tabEl = document.getElementById(`tab-${t}`);
+                const panelEl = document.getElementById(`panel-${t}`);
+                
+                if (t === tabId) {
+                    tabEl.className = "flex-1 py-3 px-4 text-xs md:text-sm font-bold border-b-2 border-neonPurple text-zinc-100 transition focus:outline-none";
+                    panelEl.classList.remove('hidden');
+                } else {
+                    tabEl.className = "flex-1 py-3 px-4 text-xs md:text-sm font-bold border-b-2 border-transparent text-zinc-500 hover:text-zinc-300 transition focus:outline-none";
+                    panelEl.classList.add('hidden');
+                }
+            });
+            activeTab = tabId;
+        }
+
+        function copyRawJson() {
+            const rawJsonText = document.getElementById('output').textContent;
+            
+            // Use fallback standard API to make it robust inside frames
+            const el = document.createElement('textarea');
+            el.value = rawJsonText;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            triggerToast("Copied JSON payload to clipboard!");
+        }
+    </script>
+</body>
+</html>
